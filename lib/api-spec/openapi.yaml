@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: assistant
+    description: Stateless AI chat and voice requests
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /assistant/chat:
+    post:
+      operationId: streamAssistantChat
+      tags: [assistant]
+      summary: Stream one assistant reply without server-side conversation storage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantChatRequest"
+      responses:
+        "200":
+          description: Server-sent event stream of text chunks
+          content:
+            text/event-stream: {}
+        "503":
+          description: AI integration is not configured
+  /assistant/voice:
+    post:
+      operationId: replyToAssistantVoice
+      tags: [assistant]
+      summary: Send one audio turn and receive a transcript with spoken audio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantVoiceRequest"
+      responses:
+        "200":
+          description: One voice response; audio is WAV encoded as base64
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantVoiceResponse"
+        "503":
+          description: AI integration is not configured
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    AssistantChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        personality:
+          type: string
+          maxLength: 1000
+        developerMode:
+          type: boolean
+      required:
+        - message
+    AssistantVoiceRequest:
+      type: object
+      properties:
+        audio:
+          type: string
+          description: Base64-encoded audio recorded for this turn only
+        personality:
+          type: string
+          maxLength: 1000
+        developerMode:
+          type: boolean
+      required:
+        - audio
+    AssistantVoiceResponse:
+      type: object
+      properties:
+        transcript:
+          type: string
+        audioBase64:
+          type: string
+        audioFormat:
+          type: string
+          enum: [wav]
+      required:
+        - transcript
+        - audioBase64
+        - audioFormat
+

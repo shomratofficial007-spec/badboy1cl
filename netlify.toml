@@ -1,0 +1,21 @@
+# Netlify frontend + API configuration.
+# The static web export is published from artifacts/mobile/dist, and the
+# assistant API runs as Netlify Functions in netlify/functions/ (served
+# same-origin at /api/*). The standalone Express API is only for
+# non-Netlify hosts (see Dockerfile.api).
+[build]
+  base = "."
+  command = "corepack enable && corepack prepare pnpm@10.8.1 --activate && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/mobile build"
+  publish = "artifacts/mobile/dist"
+
+[functions]
+  directory = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+  BASE_PATH = "/"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
